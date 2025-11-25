@@ -1,0 +1,13 @@
+{
+  "migIndex": 1,
+  "data": [
+    {
+      "path": "assets/fonts/PostNoBillsJaffna-Bold.ttf",
+      "sha1": "35477bc1f780442984f68b127847aea0e3fc89af"
+    },
+    {
+      "path": "assets/fonts/PostNoBillsJaffna-ExtraBold.ttf",
+      "sha1": "8a6fec31148f3e0a43dd222ff1257f0a9b9546fc"
+    }
+  ]
+}
