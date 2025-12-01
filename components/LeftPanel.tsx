@@ -2,8 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Text, View, StyleSheet, Dimensions, NativeModules, NativeEventEmitter, ScrollView,TouchableOpacity,Modal ,TextInput,Animated} from 'react-native';
 import { AnimatedCircularProgress } from 'react-native-circular-progress';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import Icons from 'react-native-vector-icons/MaterialIcons';
-import { BlurView } from '@react-native-community/blur';
 
 const { width, height } = Dimensions.get('window');
 const { UDPModule } = NativeModules;
@@ -32,6 +30,7 @@ function LeftPanel({ data,isLive,isStartTimer,calibrationData }: LeftPanelProps)
     const [yValue, setYValue] = useState<string>('');
     const [zValue, setZValue] = useState<string>('');
     const [time, setTime] = useState(0);
+    const [error,setError]=useState<string>('');
     const formatTime = (totalSeconds: number) => {
       const hrs = Math.floor(totalSeconds / 3600);
       const mins = Math.floor((totalSeconds % 3600) / 60);
@@ -55,7 +54,29 @@ function LeftPanel({ data,isLive,isStartTimer,calibrationData }: LeftPanelProps)
 
       return () => clearInterval(interval);
     }, [isStartTimer]);
-
+    const validation =(text:string)=>{
+      if (!/^-?\d*\.?\d*$/.test(text)) {
+        setError('Invalid co-ordinate value');
+        return;
+      } else if (text.endsWith('.') && text.split('.').length > 2) {
+        // Prevent multiple decimal points
+        setError('Invalid co-ordinate value');
+        return;
+      }
+      setError('');
+    }
+    const xValidation=(value:string)=>{
+      setXValue(value);
+      validation(value);
+    }
+    const yValidation=(value:string)=>{
+      setYValue(value);
+      validation(value);
+    }
+    const zValidation=(value:string)=>{
+      setZValue(value);
+      validation(value);
+    }
     const handleSendCoordinates = () => {
       console.log('Sending coordinates:', {
         x: parseFloat(xValue) || 0,
@@ -79,7 +100,7 @@ function LeftPanel({ data,isLive,isStartTimer,calibrationData }: LeftPanelProps)
         <Modal 
           visible={isCalibrationVisible} 
           onRequestClose={() => setIsCalibrationVisible(false)}  
-          animationType="fade" 
+          animationType="fade"
           // presentationStyle='formSheet'
           transparent={true}
         >
@@ -95,7 +116,7 @@ function LeftPanel({ data,isLive,isStartTimer,calibrationData }: LeftPanelProps)
                   keyboardType="numeric"
                   placeholder="Enter X value"
                   value={xValue}
-                  onChangeText={setXValue}
+                  onChangeText={xValidation}
                   placeholderTextColor={"#888"}
                 />
               </View>
@@ -108,7 +129,7 @@ function LeftPanel({ data,isLive,isStartTimer,calibrationData }: LeftPanelProps)
                   keyboardType="numeric"
                   placeholder="Enter Y value"
                   value={yValue}
-                  onChangeText={setYValue}
+                  onChangeText={yValidation}
                   placeholderTextColor={"#888"}
                 />
               </View>
@@ -121,11 +142,11 @@ function LeftPanel({ data,isLive,isStartTimer,calibrationData }: LeftPanelProps)
                   keyboardType="numeric"
                   placeholder="Enter Z value"
                   value={zValue}
-                  onChangeText={setZValue}
+                  onChangeText={zValidation}
                   placeholderTextColor={"#888"}
                 />
               </View>
-    
+              <Text style={{color:"red"}}>{error}</Text>
               {/* Buttons Container */}
               {/* Replace the buttons section with this */}
               <View style={styles.buttonsContainer}>
@@ -138,7 +159,12 @@ function LeftPanel({ data,isLive,isStartTimer,calibrationData }: LeftPanelProps)
                 
                 <TouchableOpacity 
                   style={[styles.button, styles.sendButton]} 
-                  onPress={()=>{handleSendCoordinates(); setIsCalibrationVisible(false);}}
+                  onPress={()=>{
+                    if (error==""){
+                    handleSendCoordinates();
+                    setIsCalibrationVisible(false);
+                    }
+                  }}
                 >
                   <Text style={styles.sendButtonText}>Set</Text>
                 </TouchableOpacity>
@@ -148,10 +174,12 @@ function LeftPanel({ data,isLive,isStartTimer,calibrationData }: LeftPanelProps)
         </Modal>
           </View>
           <TouchableOpacity onPress={()=>{setIsCalibrationVisible(true)}} style={styles.gear} >
-          <Icon name="gear" size={28} color="#E7CA55" />
+          <Icon name="gear" size={28} color="#E7CA55" style={{padding:10}} />
         </TouchableOpacity>
-            <ScrollView 
+              <ScrollView 
+                persistentScrollbar={true}
                 style={styles.scrollContainer}
+                // scrollbarThumbColor="#ff6347" 
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={true}
             >
@@ -183,7 +211,7 @@ function LeftPanel({ data,isLive,isStartTimer,calibrationData }: LeftPanelProps)
               <>
             {/* <Text style={styles.dataTitle}>General Data  </Text> */}
             <View style={styles.dataRow}>
-              <Text style={styles.dataLabel}>Elapsed Time(min)  :</Text>
+              <Text style={styles.dataLabel}>Elapsed Time  </Text>
               <Text style={styles.dataValue}>{formatTime(time)}</Text>
             </View>
             
@@ -194,19 +222,19 @@ function LeftPanel({ data,isLive,isStartTimer,calibrationData }: LeftPanelProps)
             </View> */}
             
             <View style={styles.dataRow}>
-              <Text style={styles.dataLabel}>Distance Covered(m)  :</Text>
+              <Text style={styles.dataLabel}>Distance Covered(m)  </Text>
               {data?<Text style={styles.dataValue}>{data.data8}</Text>:
               <Text style={styles.dataValue}></Text>}
             </View>
             
             <View style={styles.dataRow}>
-              <Text style={styles.dataLabel}>Waste Intake(l)  :</Text>
+              <Text style={styles.dataLabel}>Waste Intake(l)  </Text>
               {data?<Text style={styles.dataValue}>{data.data10}</Text>:
               <Text style={styles.dataValue}></Text>}
             </View>
             
             <View style={styles.dataRow}>
-              <Text style={styles.dataLabel}>Total waste cleared(%)  :</Text>
+              <Text style={styles.dataLabel}>Total waste cleared(%)  </Text>
               {data?<Text style={styles.dataValue}>{data.data11}</Text>:
               <Text style={styles.dataValue}></Text>}
             </View>
@@ -218,55 +246,55 @@ function LeftPanel({ data,isLive,isStartTimer,calibrationData }: LeftPanelProps)
             <View style={styles.dataRow}>
             {/* <Icons name="timelapse" size={18} color="white" style={{ marginRight: 10 }} /> */}
               
-              <Text style={styles.dataLabel}>Elapsed Time(min)  :</Text>
+              <Text style={styles.dataLabel}>Elapsed Time  </Text>
               <Text style={styles.dataValue}>{formatTime(time)}</Text>
             </View>
             
             <View style={styles.dataRow}>
             {/* <Icon name="hourglass-end" size={18} color="white" style={{ marginRight: 10 }} /> */}
-              <Text style={styles.dataLabel}>Remaining Time(min)  :</Text>
+              <Text style={styles.dataLabel}>Remaining Time  </Text>
               {data?<Text style={styles.dataValue}>{formatTime(data.data6 || 0)}</Text>:
               <Text style={styles.dataValue}></Text>}
             </View>
     
             <View style={styles.dataRow}>
             {/* <Icons name="zoominmaptwotone" size={18} color="white" style={{ marginRight: 10 }} /> */}
-              <Text style={styles.dataLabel}>Clenaup Count(Nos)  :</Text>
+              <Text style={styles.dataLabel}>Clenaup Count(Nos)  </Text>
               {data?<Text style={styles.dataValue}>{data.data7}</Text>:
               <Text style={styles.dataValue}></Text>}
             </View>
             
             <View style={styles.dataRow}>
-              <Text style={styles.dataLabel}>Distance Covered(m)  :</Text>
+              <Text style={styles.dataLabel}>Distance Covered(m)  </Text>
               {data?<Text style={styles.dataValue}>{data.data8}</Text>:
               <Text style={styles.dataValue}></Text>}
             </View>
             
             <View style={styles.dataRow}>
-              <Text style={styles.dataLabel}>Working Velocity(m/s)  :</Text>
+              <Text style={styles.dataLabel}>Working Velocity(m/s)  </Text>
               {data?<Text style={styles.dataValue}>{data.data9}</Text>:
               <Text style={styles.dataValue}></Text>}
             </View>
             
             <View style={styles.dataRow}>
-              <Text style={styles.dataLabel}>World Co-ordinate :</Text>
+              <Text style={styles.dataLabel}>World Co-ordinate </Text>
               {data?<Text style={[styles.dataValue,{fontSize:13}]}>{data.data0}, {data.data1}, {data.data2}</Text>:
               <Text style={styles.dataValue}></Text>}
             </View>
             
             <View style={styles.dataRow}>
-              <Text style={styles.dataLabel}>Waste Intake(l)  :</Text>
+              <Text style={styles.dataLabel}>Waste Intake(l)  </Text>
               {data?<Text style={styles.dataValue}>{data.data10}</Text>:
               <Text style={styles.dataValue}></Text>}
             </View>
             
             <View style={styles.dataRow}>
-              <Text style={styles.dataLabel}>Total waste cleared(%)  :</Text>
+              <Text style={styles.dataLabel}>Total waste cleared(%)  </Text>
               {data?<Text style={styles.dataValue}>{data.data11}</Text>:
               <Text style={styles.dataValue}></Text>}
             </View>
             <View style={styles.dataRow}>
-              <Text style={styles.dataLabel}>Status Code  :</Text>
+              <Text style={[styles.dataLabel,{color:"red"}]}>Status Code  </Text>
               {data?<Text style={styles.dataValue}>{data.data13}</Text>:
               <Text style={styles.dataValue}></Text>}
             </View>
